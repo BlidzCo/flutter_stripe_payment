@@ -3,7 +3,8 @@ library stripe_js;
 
 import "package:js/js.dart";
 import "stripe-js/elements.dart" show StripeElements, StripeElementsOptions;
-import "stripe-js/payment-request.dart" show PaymentRequest, PaymentRequestOptions;
+import "stripe-js/payment-request.dart"
+    show PaymentRequest, PaymentRequestOptions;
 import "stripe-js/payment-intents.dart"
     show
         ConfirmAuBecsDebitPaymentData,
@@ -296,7 +297,7 @@ abstract class _Stripe {
   /// See the [documentation](https://stripe.com/docs/connect/account-tokens) to learn more.
   /*external Promise<{token?: Token; error?: StripeError}> createToken('person' tokenType, Person data);*/
   external Promise<dynamic /*{token?: Token; error?: StripeError}*/ > createToken(
-      String /*'pii'|'bank_account'|'cvc_update'|'account'|'person'*/ tokenType,
+      dynamic /*'pii'|'bank_account'|'cvc_update'|'account'|'person'*/ tokenType,
       [dynamic /*CreateTokenIbanData|CreateTokenCardData|CreateTokenPiiData|CreateTokenBankAccountData|Account|Person*/ data_element]);
 
   /// Use `stripe.createSource` to convert payment information collected by elements into a `Source` object that you safely pass to your server to use in an API call.
@@ -758,7 +759,7 @@ extension StripeExtensions on Stripe {
   }
 
   Future<dynamic /*{token?: Token; error?: StripeError}*/ > createToken(
-      String /*'pii'|'bank_account'|'cvc_update'|'account'|'person'*/ tokenType,
+      dynamic /*'pii'|'bank_account'|'cvc_update'|'account'|'person'*/ tokenType,
       [dynamic /*CreateTokenIbanData|CreateTokenCardData|CreateTokenPiiData|CreateTokenBankAccountData|Account|Person*/ data_element]) {
     final Object t = this;
     final _Stripe tt = t;

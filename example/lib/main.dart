@@ -3,7 +3,16 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:stripe_payment/stripe_payment.dart';
+import 'package:stripe_payment/src/web/js/stripe-js.dart'
+    show Stripe, initializeStripe;
+import "package:stripe_payment/src/web/js/stripe-js/elements.dart"
+    show StripeElements, StripeElementsOptions;
+import "package:stripe_payment/src/web/js/stripe-js/elements/card.dart"
+    show StripeCardElementOptions;
 import 'dart:io';
+import 'dart:ui' as ui;
+// ignore: avoid_web_libraries_in_flutter
+import 'dart:html' as html;
 
 void main() {
   runApp(new MyApp());
@@ -12,6 +21,129 @@ void main() {
 class MyApp extends StatefulWidget {
   @override
   _MyAppState createState() => new _MyAppState();
+}
+
+class StripeCreditCardForm extends StatefulWidget {
+  final CreditCard card;
+
+  StripeCreditCardForm({Key key, @required this.card}) : super(key: key);
+
+  @override
+  _StripeCreditCardFormState createState() => _StripeCreditCardFormState();
+}
+
+bool stripeContainerRegistered = false;
+
+class _StripeCreditCardFormState extends State<StripeCreditCardForm> {
+  @override
+  Widget build(BuildContext context) {
+    if (kIsWeb) {
+      return Container(
+          child: SizedBox(
+              width: 300,
+              height: 200,
+              child: HtmlElementView(
+                viewType: 'stripe-container',
+                key: widget.key,
+              )));
+    } else {
+      return Container(
+        child: AutofillGroup(
+            child: Column(
+              children: [
+                TextFormField(
+                  autofillHints: [AutofillHints.creditCardNumber],
+                  decoration:
+                      const InputDecoration(labelText: 'Credit card number'),
+                  key: Key("CreditCardNumber"),
+                  initialValue: widget.card.number,
+                  onChanged: (value) => widget.card.number = value,
+                ),
+                TextFormField(
+                  autofillHints: [AutofillHints.creditCardExpirationYear],
+                  decoration: const InputDecoration(
+                      labelText: 'Credit card exipration year'),
+                  key: Key("CreditCardExpirationYear"),
+                  initialValue: widget.card.expYear.toString(),
+                  onChanged: (value) => widget.card.expYear = int.parse(value),
+                ),
+                TextFormField(
+                  autofillHints: [AutofillHints.creditCardExpirationMonth],
+                  decoration: const InputDecoration(
+                      labelText: 'Credit card exipration month'),
+                  key: Key("CreditCardExpirationMonth"),
+                  initialValue: widget.card.expMonth.toString(),
+                  onChanged: (value) => widget.card.expMonth = int.parse(value),
+                ),
+                TextFormField(
+                  autofillHints: [AutofillHints.creditCardSecurityCode],
+                  decoration: const InputDecoration(
+                      labelText: 'Credit card security code'),
+                  key: Key("CreditCardCVC"),
+                  initialValue: widget.card.cvc,
+                  onChanged: (value) => widget.card.cvc = value,
+                )
+              ],
+            ),
+            key: widget.key),
+      );
+    }
+  }
+
+  dynamic token;
+
+  @override
+  void initState() {
+    if (kIsWeb && !stripeContainerRegistered) {
+      // ignore: undefined_prefixed_name
+      ui.platformViewRegistry.registerViewFactory('stripe-container',
+          (int viewId) {
+        // html.DivElement container = html.DivElement()
+        //   ..id = 'stripe-container'
+        //   ..innerHtml =
+        //       '<span class="stripe-test">Loading Stripe card form...</span><button id="stripe-submit">Submit</button>'
+        //   ..style.border = 'none'
+        //   ..style.width = "100px";
+
+        // container.append(html.ScriptElement()
+        //   ..text = """
+        // const shadowRoot = document.querySelector("flt-platform-view").shadowRoot;
+        // const container = shadowRoot.querySelector("#stripe-container");
+        // const stripe = Stripe('pk_test_aSaULNS8cJU6Tvo20VAXy6rp');
+        // const elements = stripe.elements();
+        // const card = elements.create('card');
+        // card.mount(container.querySelector('.stripe-test'));
+        // container.querySelector('#stripe-submit').addEventListener('click', handle);
+
+        // function handle() {
+        //   console.log(shadowRoot, shadowRoot.host, shadowRoot.host.querySelector('#stripe-container'), container)
+        //   stripe.createToken(card);
+        // }
+        // """);
+
+        html.IFrameElement container = html.IFrameElement();
+
+        html.DivElement test = html.DivElement();
+        test.innerHtml =
+            '<span class="stripe-test">Loading Stripe card form...</span><button id="stripe-submit">Submit</button>';
+
+        container.parentNode.append(test);
+
+        return container;
+      });
+
+      stripeContainerRegistered = true;
+
+      // WidgetsBinding.instance.addPostFrameCallback((_) async {
+      //   mountCard();
+      // });
+    }
+    super.initState();
+  }
+
+  Future<void> mountCard() async {
+    token = await StripePayment.cardForm('stripe-container');
+  }
 }
 
 class _MyAppState extends State<MyApp> {
@@ -24,7 +156,7 @@ class _MyAppState extends State<MyApp> {
 
   ScrollController _controller = ScrollController();
 
-  final CreditCard testCard = CreditCard(
+  CreditCard testCard = CreditCard(
     number: '4000002760003184',
     expMonth: 12,
     expYear: 21,
@@ -36,12 +168,15 @@ class _MyAppState extends State<MyApp> {
   initState() {
     super.initState();
 
-    StripePayment.setOptions(
-        StripeOptions(publishableKey: "pk_test_aSaULNS8cJU6Tvo20VAXy6rp", merchantId: "Test", androidPayMode: 'test'));
+    StripePayment.setOptions(StripeOptions(
+        publishableKey: "pk_test_aSaULNS8cJU6Tvo20VAXy6rp",
+        merchantId: "Test",
+        androidPayMode: 'test'));
   }
 
   void setError(dynamic error) {
-    _scaffoldKey.currentState.showSnackBar(SnackBar(content: Text(error.toString())));
+    _scaffoldKey.currentState
+        .showSnackBar(SnackBar(content: Text(error.toString())));
     setState(() {
       _error = error.toString();
     });
@@ -72,6 +207,9 @@ class _MyAppState extends State<MyApp> {
           controller: _controller,
           padding: const EdgeInsets.all(20),
           children: <Widget>[
+            Text("Create Token with Card:"),
+            StripeCreditCardForm(card: testCard),
+            Divider(),
             RaisedButton(
               child: Text("Create Source"),
               onPressed: () {
@@ -81,7 +219,8 @@ class _MyAppState extends State<MyApp> {
                   currency: 'eur',
                   returnURL: 'example://stripe-redirect',
                 )).then((source) {
-                  _scaffoldKey.currentState.showSnackBar(SnackBar(content: Text('Received ${source.sourceId}')));
+                  _scaffoldKey.currentState.showSnackBar(
+                      SnackBar(content: Text('Received ${source.sourceId}')));
                   setState(() {
                     _source = source;
                   });
@@ -92,8 +231,11 @@ class _MyAppState extends State<MyApp> {
             RaisedButton(
               child: Text("Create Token with Card Form"),
               onPressed: () {
-                StripePayment.paymentRequestWithCardForm(CardFormPaymentRequest()).then((paymentMethod) {
-                  _scaffoldKey.currentState.showSnackBar(SnackBar(content: Text('Received ${paymentMethod.id}')));
+                StripePayment.paymentRequestWithCardForm(
+                        CardFormPaymentRequest())
+                    .then((paymentMethod) {
+                  _scaffoldKey.currentState.showSnackBar(
+                      SnackBar(content: Text('Received ${paymentMethod.id}')));
                   setState(() {
                     _paymentMethod = paymentMethod;
                   });
@@ -103,14 +245,19 @@ class _MyAppState extends State<MyApp> {
             RaisedButton(
               child: Text("Create Token with Card"),
               onPressed: () {
-                StripePayment.createTokenWithCard(
-                  testCard,
-                ).then((token) {
-                  _scaffoldKey.currentState.showSnackBar(SnackBar(content: Text('Received ${token.tokenId}')));
-                  setState(() {
-                    _paymentToken = token;
-                  });
-                }).catchError(setError);
+                if (kIsWeb) {
+                  StripePayment.tokenFromCardForm();
+                } else {
+                  StripePayment.createTokenWithCard(
+                    testCard,
+                  ).then((token) {
+                    _scaffoldKey.currentState.showSnackBar(
+                        SnackBar(content: Text('Received ${token.tokenId}')));
+                    setState(() {
+                      _paymentToken = token;
+                    });
+                  }).catchError(setError);
+                }
               },
             ),
             Divider(),
@@ -122,7 +269,8 @@ class _MyAppState extends State<MyApp> {
                     card: testCard,
                   ),
                 ).then((paymentMethod) {
-                  _scaffoldKey.currentState.showSnackBar(SnackBar(content: Text('Received ${paymentMethod.id}')));
+                  _scaffoldKey.currentState.showSnackBar(
+                      SnackBar(content: Text('Received ${paymentMethod.id}')));
                   setState(() {
                     _paymentMethod = paymentMethod;
                   });
@@ -141,7 +289,8 @@ class _MyAppState extends State<MyApp> {
                           ),
                         ),
                       ).then((paymentMethod) {
-                        _scaffoldKey.currentState.showSnackBar(SnackBar(content: Text('Received ${paymentMethod.id}')));
+                        _scaffoldKey.currentState.showSnackBar(SnackBar(
+                            content: Text('Received ${paymentMethod.id}')));
                         setState(() {
                           _paymentMethod = paymentMethod;
                         });
@@ -160,8 +309,9 @@ class _MyAppState extends State<MyApp> {
                           paymentMethodId: _paymentMethod.id,
                         ),
                       ).then((paymentIntent) {
-                        _scaffoldKey.currentState
-                            .showSnackBar(SnackBar(content: Text('Received ${paymentIntent.paymentIntentId}')));
+                        _scaffoldKey.currentState.showSnackBar(SnackBar(
+                            content: Text(
+                                'Received ${paymentIntent.paymentIntentId}')));
                         setState(() {
                           _paymentIntent = paymentIntent;
                         });
@@ -173,9 +323,12 @@ class _MyAppState extends State<MyApp> {
               onPressed: _currentSecret == null
                   ? null
                   : () {
-                      StripePayment.authenticatePaymentIntent(clientSecret: _currentSecret).then((paymentIntent) {
-                        _scaffoldKey.currentState
-                            .showSnackBar(SnackBar(content: Text('Received ${paymentIntent.paymentIntentId}')));
+                      StripePayment.authenticatePaymentIntent(
+                              clientSecret: _currentSecret)
+                          .then((paymentIntent) {
+                        _scaffoldKey.currentState.showSnackBar(SnackBar(
+                            content: Text(
+                                'Received ${paymentIntent.paymentIntentId}')));
                         setState(() {
                           _paymentIntent = paymentIntent;
                         });
@@ -206,7 +359,8 @@ class _MyAppState extends State<MyApp> {
                   ),
                 ).then((token) {
                   setState(() {
-                    _scaffoldKey.currentState.showSnackBar(SnackBar(content: Text('Received ${token.tokenId}')));
+                    _scaffoldKey.currentState.showSnackBar(
+                        SnackBar(content: Text('Received ${token.tokenId}')));
                     _paymentToken = token;
                   });
                 }).catchError(setError);
@@ -216,7 +370,8 @@ class _MyAppState extends State<MyApp> {
               child: Text("Complete Native Payment"),
               onPressed: () {
                 StripePayment.completeNativePayRequest().then((_) {
-                  _scaffoldKey.currentState.showSnackBar(SnackBar(content: Text('Completed successfully')));
+                  _scaffoldKey.currentState.showSnackBar(
+                      SnackBar(content: Text('Completed successfully')));
                 }).catchError(setError);
               },
             ),
@@ -229,19 +384,22 @@ class _MyAppState extends State<MyApp> {
             Divider(),
             Text('Current token:'),
             Text(
-              JsonEncoder.withIndent('  ').convert(_paymentToken?.toJson() ?? {}),
+              JsonEncoder.withIndent('  ')
+                  .convert(_paymentToken?.toJson() ?? {}),
               style: TextStyle(fontFamily: "Monospace"),
             ),
             Divider(),
             Text('Current payment method:'),
             Text(
-              JsonEncoder.withIndent('  ').convert(_paymentMethod?.toJson() ?? {}),
+              JsonEncoder.withIndent('  ')
+                  .convert(_paymentMethod?.toJson() ?? {}),
               style: TextStyle(fontFamily: "Monospace"),
             ),
             Divider(),
             Text('Current payment intent:'),
             Text(
-              JsonEncoder.withIndent('  ').convert(_paymentIntent?.toJson() ?? {}),
+              JsonEncoder.withIndent('  ')
+                  .convert(_paymentIntent?.toJson() ?? {}),
               style: TextStyle(fontFamily: "Monospace"),
             ),
             Divider(),
