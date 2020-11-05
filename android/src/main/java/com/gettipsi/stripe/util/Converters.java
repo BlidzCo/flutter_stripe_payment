@@ -67,9 +67,8 @@ public class Converters {
     WritableMap billingContactMap = convertAddressToWritableMap(billingAddress);
     WritableMap shippingContactMap = convertAddressToWritableMap(shippingAddress);
 
-    billingContactMap.putString("emailAddress", emailAddress);
-    shippingContactMap.putString("emailAddress", emailAddress);
-
+    putIfNotEmpty(billingContactMap, "emailAddress", emailAddress);
+    putIfNotEmpty(shippingContactMap, "emailAddress", emailAddress);
 
     extra.putMap("billingContact", billingContactMap);
     extra.putMap("shippingContact", shippingContactMap);
@@ -484,6 +483,7 @@ public class Converters {
     putIfNotEmpty(result, "phoneNumber", address.getPhoneNumber());
     putIfNotEmpty(result, "postalCode", address.getPostalCode());
     putIfNotEmpty(result, "sortingCode", address.getSortingCode());
+    putIfNotEmpty(result, "emailAddress", address.getEmailAddress());
 
     return result;
   }
