@@ -7,12 +7,14 @@ class AndroidPayPaymentRequest {
   bool shippingAddressRequired;
   List<String> shippingCountries;
   String totalPrice;
+  bool phoneNumberRequired;
 
   AndroidPayPaymentRequest(
       {this.billingAddressRequired,
       @required this.currencyCode,
       this.lineItems,
       this.shippingAddressRequired,
+      this.phoneNumberRequired,
       this.shippingCountries,
       @required this.totalPrice});
 
@@ -20,25 +22,36 @@ class AndroidPayPaymentRequest {
     return AndroidPayPaymentRequest(
       billingAddressRequired: json['billing_address_required'],
       currencyCode: json['currency_code'],
-      lineItems:
-          json['line_items'] != null ? (json['line_items'] as List).map((i) => LineItem.fromJson(i)).toList() : null,
+      lineItems: json['line_items'] != null
+          ? (json['line_items'] as List)
+              .map((i) => LineItem.fromJson(i))
+              .toList()
+          : null,
       shippingAddressRequired: json['shipping_address_required'],
-      shippingCountries: json['shipping_countries'] != null ? new List<String>.from(json['shipping_countries']) : null,
+      phoneNumberRequired: json['phone_number_required'],
+      shippingCountries: json['shipping_countries'] != null
+          ? new List<String>.from(json['shipping_countries'])
+          : null,
       totalPrice: json['total_price'],
     );
   }
 
   Map<dynamic, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
-    if (this.billingAddressRequired != null) data['billing_address_required'] = this.billingAddressRequired;
+    if (this.billingAddressRequired != null)
+      data['billing_address_required'] = this.billingAddressRequired;
     if (this.currencyCode != null) data['currency_code'] = this.currencyCode;
-    if (this.shippingAddressRequired != null) data['shipping_address_required'] = this.shippingAddressRequired;
+    if (this.shippingAddressRequired != null)
+      data['shipping_address_required'] = this.shippingAddressRequired;
+    if (this.phoneNumberRequired != null)
+      data['phone_number_required'] = this.phoneNumberRequired;
     if (this.totalPrice != null) data['total_price'] = this.totalPrice;
     if (this.lineItems != null) {
       data['line_items'] = this.lineItems.map((v) => v.toJson()).toList();
     }
     if (this.shippingCountries != null) {
-      if (this.shippingCountries != null) data['shipping_countries'] = this.shippingCountries;
+      if (this.shippingCountries != null)
+        data['shipping_countries'] = this.shippingCountries;
     }
     return data;
   }
@@ -51,7 +64,12 @@ class LineItem {
   String totalPrice;
   String unitPrice;
 
-  LineItem({this.currencyCode, this.description, this.quantity, this.totalPrice, this.unitPrice});
+  LineItem(
+      {this.currencyCode,
+      this.description,
+      this.quantity,
+      this.totalPrice,
+      this.unitPrice});
 
   factory LineItem.fromJson(Map<dynamic, dynamic> json) {
     return LineItem(

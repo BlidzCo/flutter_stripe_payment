@@ -138,12 +138,13 @@ class Contact {
       name: json["name"],
       phoneNumber: json["phoneNumber"],
       emailAddress: json["emailAddress"],
-      street: json["street"],
-      city: json["city"],
-      state: json["state"],
-      country: json["country"],
+      street: json["street"] ??
+          "${json["address1"]} ${json["address2"] ?? ""}".trim(),
+      city: json["city"] ?? json["administrativeArea"],
+      state: json["state"] ?? json["locality"],
+      country: json["country"] ?? json["countryCode"],
       // ignore: non_constant_identifier_names
-      ISOCountryCode: json["ISOCountryCode"],
+      ISOCountryCode: json["ISOCountryCode"] ?? json["countryCode"],
       postalCode: json["postalCode"],
       supplementarySubLocality: json["supplementarySubLocality"],
     );
@@ -171,14 +172,20 @@ class Contact {
 
 class Extra {
   String accountHolderName;
+  String email;
   Contact billingContact;
   Contact shippingContact;
 
-  Extra({this.accountHolderName, this.billingContact, this.shippingContact});
+  Extra(
+      {this.accountHolderName,
+      this.email,
+      this.billingContact,
+      this.shippingContact});
 
   factory Extra.fromJson(Map<dynamic, dynamic> json) {
     return Extra(
       accountHolderName: json['accountHolderName'],
+      email: json['email'],
       billingContact: json['billingContact'] != null
           ? Contact.fromJson(json['billingContact'])
           : null,
@@ -192,6 +199,7 @@ class Extra {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     if (this.accountHolderName != null)
       data['accountHolderName'] = this.accountHolderName;
+    if (this.email != null) data['email'] = this.email;
     if (this.billingContact != null) {
       data['billingContact'] = this.billingContact.toJson();
     }
