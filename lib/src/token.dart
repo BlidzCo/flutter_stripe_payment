@@ -140,8 +140,8 @@ class Contact {
       emailAddress: json["emailAddress"],
       street: json["street"] ??
           "${json["address1"]} ${json["address2"] ?? ""}".trim(),
-      city: json["city"] ?? json["administrativeArea"],
-      state: json["state"] ?? json["locality"],
+      city: json["city"] ?? json["locality"],
+      state: json["state"] ?? json["administrativeArea"],
       country: json["country"] ?? json["countryCode"],
       // ignore: non_constant_identifier_names
       ISOCountryCode: json["ISOCountryCode"] ?? json["countryCode"],
