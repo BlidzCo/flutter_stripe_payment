@@ -50,12 +50,12 @@ class StripePayment {
   static Future<bool> canMakeNativePayPayments(List<String> networks,
       {String currencyCode, String countryCode}) async {
     if (kIsWeb) {
-      if (currencyCode == null || countryCode == null) return null;
+      if (currencyCode == null || countryCode == null) return false;
       final canMakePayments = await _channel.invokeMethod(
           'canMakeNativePayPayments',
           {'currency_code': currencyCode, 'country_code': countryCode});
-      if (canMakePayments == null) return null;
-      return canMakePayments['applePay'];
+      if (canMakePayments == null) return false;
+      return canMakePayments['applePay'] ?? false;
     } else {
       if (Platform.isAndroid) {
         return await _channel.invokeMethod('canMakeAndroidPayPayments');
