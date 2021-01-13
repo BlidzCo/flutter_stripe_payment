@@ -47,27 +47,21 @@ class StripePayment {
   }
 
   /// https://tipsi.github.io/tipsi-stripe/docs/canMakeNativePayPayments.html
-  static Future<Map<String, bool>> canMakeNativePayPayments(
-      List<String> networks,
-      {String currencyCode,
-      String countryCode}) async {
+  static Future<bool> canMakeNativePayPayments(List<String> networks,
+      {String currencyCode, String countryCode}) async {
     if (kIsWeb) {
       if (currencyCode == null || countryCode == null) return null;
       final canMakePayments = await _channel.invokeMethod(
           'canMakeNativePayPayments',
           {'currency_code': currencyCode, 'country_code': countryCode});
       if (canMakePayments == null) return null;
-      return {'applePay': canMakePayments['applePay']};
+      return canMakePayments['applePay'];
     } else {
       if (Platform.isAndroid) {
-        return (await _channel.invokeMethod('canMakeAndroidPayPayments'))
-            ? {'applePay': false}
-            : null;
+        return await _channel.invokeMethod('canMakeAndroidPayPayments');
       } else if (Platform.isIOS) {
         Map<String, dynamic> options = {"networks": networks};
-        return (await _channel.invokeMethod('canMakeApplePayPayments', options))
-            ? {'applePay': true}
-            : null;
+        return await _channel.invokeMethod('canMakeApplePayPayments', options);
       } else
         throw UnimplementedError();
     }
