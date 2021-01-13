@@ -8,4 +8,5 @@ ios/.generated/
 packages
 pubspec.lock
 .flutter-plugins
+.last_build_id
 dev-deploy.sh
